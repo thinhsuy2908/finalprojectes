@@ -29,4 +29,3 @@ function logout(e) {
     window.location.href = "./login.html";
   }
 }
-
