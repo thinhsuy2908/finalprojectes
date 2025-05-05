@@ -1,120 +1,201 @@
 document.addEventListener('DOMContentLoaded', () => {
-    loadWordsFromStorage(); // Tải danh sách từ vựng từ localStorage khi trang được tải
-  
-    // Xử lý sự kiện khi submit form
-    document.getElementById('editCategoryForm').addEventListener('submit', handleFormSubmit);
-    // Xử lý sự kiện khi bấm nút "Add new"
-    document.querySelector('.btn-add').addEventListener('click', resetForm);
-    // Xử lý sự kiện khi bấm nút xác nhận xoá
-    document.getElementById('confirmDeleteBtn').addEventListener('click', handleDeleteConfirm);
-    // Xử lý sự kiện tìm kiếm
-    document.getElementById('searchInput').addEventListener('input', handleSearch);
+  loadCategories().then(() => {
+    loadWordsFromStorage(); // Gọi sau khi danh mục đã load xong
   });
-  
-  // Khai báo biến toàn cục để lưu chỉ số dòng đang chỉnh sửa và xóa
-  let editingRowIndex = null;
-  let deletingRowIndex = null;
-  
-  // Xử lý sự kiện submit form (Thêm / Chỉnh sửa từ vựng)
-  function handleFormSubmit(e) {
-    e.preventDefault();
-  
-    const name = document.getElementById('editCategoryName').value.trim(); // Lấy tên từ input
-    const description = document.getElementById('editCategoryDescription').value.trim(); // Lấy mô tả từ input
-  
-    if (!name) return; // Nếu tên không hợp lệ (rỗng), dừng lại
-  
-    const words = getWords(); // Lấy danh sách từ vựng hiện tại
-  
-    if (editingRowIndex !== null) { // Nếu đang chỉnh sửa, cập nhật từ vựng
-      words[editingRowIndex] = { ...words[editingRowIndex], name, description };
-      editingRowIndex = null; // Reset chỉ số chỉnh sửa sau khi lưu
-    } else { // Nếu là thêm mới, tạo ID và thêm từ vựng vào danh sách
-      const id = Date.now().toString(); // Sử dụng thời gian hiện tại làm ID duy nhất
-      words.push({ id, name, description });
-    }
-  
-    saveWords(words); // Lưu danh sách từ vựng vào localStorage
-    loadWordsFromStorage(); // Tải lại danh sách từ vựng và hiển thị
-    bootstrap.Modal.getInstance(document.getElementById('editCategoryModal')).hide(); // Đóng modal
-  }
-  
-  // Reset form khi bấm "Add new"
-  function resetForm() {
-    document.getElementById('editCategoryName').value = ''; // Xoá nội dung trong ô input tên
-    document.getElementById('editCategoryDescription').value = ''; // Xoá nội dung trong ô input mô tả
-    editingRowIndex = null; // Reset chỉ số dòng chỉnh sửa
-  }
-  
-  // Hiển thị các từ vựng ra bảng
-  function renderWords(words) {
-    const tableBody = document.getElementById('categoryTableBody'); // Lấy phần tử tbody trong bảng
-    tableBody.innerHTML = ''; // Xoá nội dung cũ của bảng
-  
-    words.forEach((word, index) => { // Lặp qua từng từ vựng và tạo một dòng trong bảng
-      const row = document.createElement('tr'); // Tạo một dòng mới trong bảng
-      row.innerHTML = `
-        <td>${word.name}</td>
-        <td>${word.description}</td>
-        <td>Category</td>
-        <td>
-          <button class="btn btn-sm btn-warning">Edit</button>
-          <button class="btn btn-sm btn-danger">Delete</button>
-        </td>
-      `;
-  
-      // Xử lý sự kiện khi bấm nút "Edit"
-      row.querySelector('.btn-warning').addEventListener('click', () => {
-        editingRowIndex = index; // Ghi nhận chỉ số dòng đang chỉnh sửa
-        document.getElementById('editCategoryName').value = word.name; // Điền tên vào form
-        document.getElementById('editCategoryDescription').value = word.description; // Điền mô tả vào form
-        new bootstrap.Modal(document.getElementById('editCategoryModal')).show(); // Hiển thị modal chỉnh sửa
+
+  document.getElementById('editCategoryForm').addEventListener('submit', handleFormSubmit);
+  document.querySelector('.btn-add').addEventListener('click', resetForm);
+  document.getElementById('confirmDeleteBtn').addEventListener('click', handleDeleteConfirm);
+  document.getElementById('searchInput').addEventListener('input', handleSearch);
+
+  // Chỉ lọc khi người dùng chọn danh mục
+  document.querySelectorAll('#categorySelect')[0].addEventListener('change', () => {
+    currentPage = 1;
+    loadWordsFromStorage();
+  });
+});
+
+// Biến toàn cục
+let editingRowIndex = null;
+let deletingRowIndex = null;
+let currentPage = 1;
+const wordsPerPage = 3;
+
+// Load danh mục
+function loadCategories() {
+  return new Promise((resolve) => {
+    const categoriesData = JSON.parse(localStorage.getItem("vocabCategories")) || [];
+    const selects = document.querySelectorAll('#categorySelect');
+    selects.forEach(select => {
+      select.innerHTML = '<option value="">All Categories</option>';
+      categoriesData.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category.name;
+        option.textContent = category.name;
+        select.appendChild(option);
       });
-  
-      // Xử lý sự kiện khi bấm nút "Delete"
-      row.querySelector('.btn-danger').addEventListener('click', () => {
-        deletingRowIndex = index; // Ghi nhận chỉ số dòng đang xoá
-        new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show(); // Hiển thị modal xác nhận xoá
-      });
-  
-      tableBody.appendChild(row); // Thêm dòng mới vào bảng
     });
+    resolve();
+  });
+}
+
+// Form submit
+function handleFormSubmit(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('editCategoryName').value.trim();
+  const description = document.getElementById('editCategoryDescription').value.trim();
+  const category = document.querySelectorAll('#categorySelect')[1].value;
+
+  if (!name || !category) return;
+
+  const words = getWords();
+
+  if (editingRowIndex !== null) {
+    words[editingRowIndex] = { ...words[editingRowIndex], name, description, category };
+    editingRowIndex = null;
+  } else {
+    const id = Date.now().toString();
+    words.push({ id, name, description, category });
   }
-  
-  // Xử lý xác nhận xoá khi bấm "Delete" trong Modal
-  function handleDeleteConfirm() {
-    if (deletingRowIndex !== null) { // Nếu có dòng cần xoá
-      const words = getWords(); // Lấy danh sách từ vựng hiện tại
-      words.splice(deletingRowIndex, 1); // Xoá từ vựng tại vị trí đã lưu
-      saveWords(words); // Lưu lại danh sách từ vựng mới
-      loadWordsFromStorage(); // Tải lại bảng và hiển thị
-      deletingRowIndex = null; // Reset chỉ số xoá
-      bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide(); // Đóng modal xác nhận xoá
+
+  saveWords(words);
+  currentPage = 1;
+  loadWordsFromStorage();
+  bootstrap.Modal.getInstance(document.getElementById('editCategoryModal')).hide();
+}
+
+// Reset form
+function resetForm() {
+  document.getElementById('editCategoryName').value = '';
+  document.getElementById('editCategoryDescription').value = '';
+  document.querySelectorAll('#categorySelect')[1].value = '';
+  editingRowIndex = null;
+}
+
+// Render từ vựng
+function renderWords(words) {
+  const tableBody = document.getElementById('categoryTableBody');
+  tableBody.innerHTML = '';
+
+  const startIndex = (currentPage - 1) * wordsPerPage;
+  const paginatedWords = words.slice(startIndex, startIndex + wordsPerPage);
+
+  paginatedWords.forEach((word, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${word.name}</td>
+      <td>${word.description}</td>
+      <td>${word.category}</td>
+      <td>
+        <button class="btn btn-sm btn-warning">Edit</button>
+        <button class="btn btn-sm btn-danger">Delete</button>
+      </td>
+    `;
+
+    row.querySelector('.btn-warning').addEventListener('click', () => {
+      const fullWords = getWords();
+      const realIndex = startIndex + index;
+      editingRowIndex = realIndex;
+      document.getElementById('editCategoryName').value = word.name;
+      document.getElementById('editCategoryDescription').value = word.description;
+      document.querySelectorAll('#categorySelect')[1].value = word.category;
+      new bootstrap.Modal(document.getElementById('editCategoryModal')).show();
+    });
+
+    row.querySelector('.btn-danger').addEventListener('click', () => {
+      const realIndex = startIndex + index;
+      deletingRowIndex = realIndex;
+      new bootstrap.Modal(document.getElementById('deleteConfirmModal')).show();
+    });
+
+    tableBody.appendChild(row);
+  });
+
+  renderPagination(words.length);
+}
+
+// Render phân trang
+function renderPagination(totalWords) {
+  const totalPages = Math.ceil(totalWords / wordsPerPage);
+  const pagination = document.getElementById('pagination');
+  pagination.innerHTML = '';
+
+  if (totalPages <= 1) return;
+
+  const prevItem = document.createElement('li');
+  prevItem.className = 'page-item ' + (currentPage === 1 ? 'disabled' : '');
+  prevItem.innerHTML = `<a class="page-link" href="#">Previous</a>`;
+  prevItem.addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      loadWordsFromStorage();
     }
-  }
-  
-  // Lưu danh sách từ vựng vào localStorage
-  function saveWords(words) {
-    localStorage.setItem('vocabWords_v2', JSON.stringify(words)); // Lưu danh sách vào localStorage với khóa riêng
-  }
-  
-  // Lấy danh sách từ vựng từ localStorage
-  function getWords() {
-    return JSON.parse(localStorage.getItem('vocabWords_v2')) || []; // Lấy danh sách từ localStorage, nếu không có thì trả về mảng rỗng
-  }
-  
-  // Load lại bảng từ localStorage
-  function loadWordsFromStorage() {
-    renderWords(getWords()); // Hiển thị lại danh sách từ vựng từ localStorage
-  }
-  
-  // Xử lý sự kiện tìm kiếm
-  function handleSearch() {
-    const searchQuery = document.getElementById('searchInput').value.toLowerCase(); // Lấy từ khóa tìm kiếm
-    const words = getWords(); // Lấy danh sách từ vựng
-    const filteredWords = words.filter(word => {
-      return word.name.toLowerCase().includes(searchQuery) || word.description.toLowerCase().includes(searchQuery);
+  });
+  pagination.appendChild(prevItem);
+
+  for (let i = 1; i <= totalPages; i++) {
+    const pageItem = document.createElement('li');
+    pageItem.className = 'page-item ' + (currentPage === i ? 'active' : '');
+    pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+    pageItem.addEventListener('click', () => {
+      currentPage = i;
+      loadWordsFromStorage();
     });
-    renderWords(filteredWords); // Hiển thị danh sách đã lọc
+    pagination.appendChild(pageItem);
   }
-  
+
+  const nextItem = document.createElement('li');
+  nextItem.className = 'page-item ' + (currentPage === totalPages ? 'disabled' : '');
+  nextItem.innerHTML = `<a class="page-link" href="#">Next</a>`;
+  nextItem.addEventListener('click', () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      loadWordsFromStorage();
+    }
+  });
+  pagination.appendChild(nextItem);
+}
+
+// Xác nhận xoá
+function handleDeleteConfirm() {
+  if (deletingRowIndex !== null) {
+    const words = getWords();
+    words.splice(deletingRowIndex, 1);
+    saveWords(words);
+    loadWordsFromStorage();
+    deletingRowIndex = null;
+    bootstrap.Modal.getInstance(document.getElementById('deleteConfirmModal')).hide();
+  }
+}
+
+// Lưu và lấy từ
+function saveWords(words) {
+  localStorage.setItem('vocabWords_v2', JSON.stringify(words));
+}
+
+function getWords() {
+  return JSON.parse(localStorage.getItem('vocabWords_v2')) || [];
+}
+
+// Load từ và lọc theo tìm kiếm + danh mục
+function loadWordsFromStorage() {
+  const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+  const selectedCategory = document.querySelectorAll('#categorySelect')[0].value;
+  let words = getWords();
+
+  words = words.filter(word => {
+    const matchesSearch = word.name.toLowerCase().includes(searchQuery) ||
+                          word.description.toLowerCase().includes(searchQuery);
+    const matchesCategory = !selectedCategory || word.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
+  renderWords(words);
+}
+
+// Tìm kiếm
+function handleSearch() {
+  currentPage = 1;
+  loadWordsFromStorage();
+}
