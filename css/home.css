@@ -1,0 +1,17 @@
+.content-wrapper {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    margin-top: 50px;
+  }
+  .navbar {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+  .btn-logout {
+    background-color: #dc3545;
+    color: #fff;
+  }
+  .btn-logout:hover {
+    background-color: #c82333;
+  }

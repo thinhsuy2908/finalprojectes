@@ -1,0 +1,37 @@
+body {
+    background-color: #f8f9fa;
+  }
+  
+  .card-box {
+    height: 550px; /* tăng chiều cao */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2rem; /* tăng kích thước chữ */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    border-radius: 12px; /* bo góc mềm mại */
+    padding: 20px; /* khoảng cách trong */
+    background-color: #ffffff;
+    transition: transform 0.2s;
+  }
+  
+  .card-box:hover {
+    transform: scale(1.03); /* hiệu ứng hover nhẹ */
+  }
+  
+  .card-box.learned {
+    background-color: #d4edda;
+  }
+  
+  .progress-bar {
+    height: 5px;
+  }
+  
+  .footer {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 0.9rem;
+    color: #666;
+  }
+  

@@ -1,0 +1,32 @@
+body {
+    background-color: #f8f9fa;
+  }
+  .login-box {
+    max-width: 400px;
+    margin: auto;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    background-color: #fff;
+  }
+  header {
+    background-color:#FFFFFF;
+    color: black;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  footer {
+    background-color: #FFFFFF;
+    color: black;
+    padding: 10px 20px;
+    width: 100%;
+  }
+.login-box{
+    width: 448px;
+    height: 794px;
+    top: 926px;
+    left: 496px;
+    border-radius: 8px;
+}
